@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from pydantic import BaseModel, Field
+from typing import Optional
 
 app = FastAPI()
 
@@ -27,11 +28,22 @@ BOOKS = [
 ]
 
 class BookRequest(BaseModel):
-    id: int
+    id: Optional[int] = None
     title: str = Field(min_length=3)
     author: str = Field(min_length=1)
     description: str = Field(min_length=1, max_length=100)
     rating: int = Field(gt=-1, lt=6)
+
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "title" : "A book name",
+                "author" : "Author's name",
+                "description" : "Description of the book",
+                "rating" : 5
+            }
+        }
+    }
 
 @app.get("/books")
 def read_all_books():
@@ -40,4 +52,5 @@ def read_all_books():
 @app.post("/create-book")
 def create_book(request_body: BookRequest):
     book = Book(**request_body.model_dump())
+    book.id = 1 if not BOOKS else BOOKS[-1].id+1
     BOOKS.append(book)
